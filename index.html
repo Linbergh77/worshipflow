@@ -339,23 +339,36 @@
 
   /* ── RESPONSIVE ── */
   @media (max-width: 768px) {
-    header { padding:14px 16px; }
-    .logo-text { font-size:18px; }
-    .app-body { flex-direction:column; height:auto; min-height:calc(100vh - 65px); }
-    .sidebar { width:100%; min-width:0; border-right:none; border-bottom:1px solid var(--border); max-height:280px; }
-    .main-content { min-height:60vh; }
-    #view-editor { padding:16px; }
+    header { padding:10px 14px; }
+    .logo-text { font-size:17px; }
+    .sync-status { display:none; }
+    .app-body { flex-direction:column; height:auto; min-height:calc(100vh - 56px); }
+    .sidebar { width:100%; min-width:0; border-right:none; border-bottom:1px solid var(--border); max-height:250px; }
+    .main-content { min-height:60vh; flex:1; }
+    #view-editor { padding:12px; }
     .editor-grid { grid-template-columns:1fr; }
-    #setup-banner { margin:12px 16px; }
+    #setup-banner { margin:10px 12px; padding:14px 16px; }
     .setup-input.wide { width:100%; }
-    #view-welcome h1 { font-size:28px; }
-    .slide-text { font-size:clamp(18px,5vw,28px); }
-    .toolbar { padding:10px 14px; }
-    #view-editor { padding:16px; }
+    #view-welcome { padding:24px 16px; }
+    #view-welcome h1 { font-size:26px; }
+    #view-welcome p { font-size:13px; }
+    .slide-text { font-size:clamp(16px,5vw,26px); }
+    .toolbar { padding:8px 12px; flex-wrap:wrap; gap:6px; }
+    .toolbar-left { flex:1; min-width:0; }
+    #editor-title-label { font-size:16px !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px; }
+    .slides-strip { height:72px; }
+    .mini-slide { min-width:90px; height:58px; }
+    .presenter-header { padding:10px 14px; flex-wrap:wrap; gap:8px; }
+    .presenter-header h2 { font-size:17px; }
+    .slide-content { padding:20px 16px; }
+    .modal { padding:20px 16px; width:95%; }
   }
   @media (max-width:480px) {
-    .toolbar-right { gap:4px; }
-    .btn { padding:7px 12px; font-size:12px; }
+    .toolbar-right { gap:3px; }
+    .btn { padding:6px 10px; font-size:11px; }
+    .btn-sm { padding:5px 9px; font-size:11px; }
+    header { padding:9px 12px; }
+    .logo-icon { width:30px; height:30px; font-size:15px; }
   }
 
   .count-badge {
@@ -450,17 +463,60 @@
     <div id="view-editor" class="hidden">
       <div class="toolbar">
         <div class="toolbar-left">
-          <span id="editor-title-label" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text)">Edit Song</span>
+          <span id="editor-title-label" style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text)">Song</span>
         </div>
         <div class="toolbar-right">
-          <button class="btn btn-ghost btn-sm" onclick="showView('welcome')">✕ Close</button>
+          <button class="btn btn-ghost btn-sm" onclick="showView('welcome')">✕</button>
+          <button class="btn btn-ghost btn-sm" id="btn-toggle-edit" onclick="toggleEditMode()">✏ Edit</button>
           <button class="btn btn-ghost btn-sm" id="btn-present" onclick="enterPresenter()">▶ Present</button>
-          <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export')">↗ Export</button>
+          <button class="btn btn-ghost btn-sm" id="btn-export" onclick="openModal('modal-export')">↗</button>
           <button class="btn btn-danger btn-sm" id="btn-delete" onclick="deleteSong()">🗑</button>
-          <button class="btn btn-primary btn-sm" onclick="saveSong()">💾 Save</button>
+          <button class="btn btn-primary btn-sm" id="btn-save" onclick="saveSong()" style="display:none;">💾 Save</button>
         </div>
       </div>
-      <div style="padding:28px 32px;">
+
+      <!-- VIEW MODE (read-only) -->
+      <div id="song-view-mode" style="padding:20px 28px;overflow-y:auto;flex:1;">
+        <!-- Song title + toggle info -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <h2 id="view-song-title" style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:var(--text);"></h2>
+            <button class="btn btn-ghost btn-sm" onclick="toggleInfoPanel()" id="btn-info-toggle">ℹ Show Info</button>
+          </div>
+          <div id="view-artist" style="font-size:13px;color:var(--text-muted);margin-top:2px;"></div>
+        </div>
+
+        <!-- Collapsible info panel -->
+        <div id="info-panel" class="hidden" style="background:var(--dark-3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Category</div>
+            <div id="view-category" style="font-size:13px;color:var(--text);"></div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Key</div>
+            <div id="view-key" style="font-size:13px;color:var(--text);"></div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Tempo</div>
+            <div id="view-tempo" style="font-size:13px;color:var(--text);"></div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Tags</div>
+            <div id="view-tags" style="font-size:13px;color:var(--text);"></div>
+          </div>
+          <div style="grid-column:1/-1;">
+            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;">Notes</div>
+            <div id="view-notes" style="font-size:13px;color:var(--text);white-space:pre-wrap;line-height:1.6;"></div>
+          </div>
+        </div>
+
+        <!-- Read-only lyrics -->
+        <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Lyrics</div>
+        <div id="view-lyrics" style="font-size:14px;color:var(--text);line-height:1.9;white-space:pre-wrap;padding-bottom:40px;"></div>
+      </div>
+
+      <!-- EDIT MODE (fields) -->
+      <div id="song-edit-mode" class="hidden" style="padding:20px 28px;overflow-y:auto;flex:1;">
         <div class="editor-grid">
           <div class="field-group">
             <label>Song Title *</label>
@@ -749,10 +805,47 @@ function createSong() {
   showToast('Song created!', '🎵');
 }
 
+let isEditMode = false;
+
 function openSong(id) {
   const s = songs.find(x => x.id === id);
   if (!s) return;
   currentSongId = id;
+  isEditMode = false;
+  populateViewMode(s);
+  populateEditFields(s);
+  document.getElementById('song-view-mode').classList.remove('hidden');
+  document.getElementById('song-edit-mode').classList.add('hidden');
+  document.getElementById('btn-save').style.display = 'none';
+  document.getElementById('btn-toggle-edit').textContent = '✏ Edit';
+  document.getElementById('editor-title-label').textContent = s.title;
+  showView('editor');
+  renderSongsList();
+}
+
+function populateViewMode(s) {
+  document.getElementById('view-song-title').textContent = s.title;
+  document.getElementById('view-artist').textContent = s.artist ? 'By ' + s.artist : '';
+  document.getElementById('view-category').textContent = s.category || '—';
+  document.getElementById('view-key').textContent = s.key || '—';
+  document.getElementById('view-tempo').textContent = s.tempo || '—';
+  document.getElementById('view-tags').textContent = s.tags || '—';
+  document.getElementById('view-notes').textContent = s.notes || '—';
+  // Render lyrics with section headers styled
+  const raw = s.lyrics || '';
+  const html = raw.split('\n').map(line => {
+    if (/^\[.+\]$/.test(line.trim())) {
+      return `<span style="color:var(--gold);font-size:11px;letter-spacing:2px;text-transform:uppercase;display:block;margin-top:20px;margin-bottom:4px;opacity:.8;">${line}</span>`;
+    }
+    return line === '' ? '<br>' : `<span style="display:block;">${line}</span>`;
+  }).join('');
+  document.getElementById('view-lyrics').innerHTML = html;
+  // hide info panel on open
+  document.getElementById('info-panel').classList.add('hidden');
+  document.getElementById('btn-info-toggle').textContent = 'ℹ Show Info';
+}
+
+function populateEditFields(s) {
   document.getElementById('edit-title').value = s.title;
   document.getElementById('edit-artist').value = s.artist || '';
   document.getElementById('edit-category').value = s.category || 'worship';
@@ -761,9 +854,25 @@ function openSong(id) {
   document.getElementById('edit-lyrics').value = s.lyrics || '';
   document.getElementById('edit-tags').value = s.tags || '';
   document.getElementById('edit-notes').value = s.notes || '';
-  document.getElementById('editor-title-label').textContent = s.title;
-  showView('editor');
-  renderSongsList();
+}
+
+function toggleEditMode() {
+  isEditMode = !isEditMode;
+  document.getElementById('song-view-mode').classList.toggle('hidden', isEditMode);
+  document.getElementById('song-edit-mode').classList.toggle('hidden', !isEditMode);
+  document.getElementById('btn-save').style.display = isEditMode ? '' : 'none';
+  document.getElementById('btn-toggle-edit').textContent = isEditMode ? '✕ Cancel' : '✏ Edit';
+  if (isEditMode) {
+    const s = songs.find(x => x.id === currentSongId);
+    if (s) populateEditFields(s);
+  }
+}
+
+function toggleInfoPanel() {
+  const panel = document.getElementById('info-panel');
+  const btn = document.getElementById('btn-info-toggle');
+  const hidden = panel.classList.toggle('hidden');
+  btn.textContent = hidden ? 'ℹ Show Info' : '▲ Hide Info';
 }
 
 function saveSong() {
@@ -779,11 +888,18 @@ function saveSong() {
   s.tags = document.getElementById('edit-tags').value.trim();
   s.notes = document.getElementById('edit-notes').value.trim();
   s.updatedAt = new Date().toISOString();
-  document.getElementById('editor-title-label').textContent = s.title;
   saveLocal();
   renderSongsList();
   if (sheetsUrl) syncToSheets(s);
-  showToast('Saved!', '✓');
+  // Switch back to view mode after save
+  isEditMode = false;
+  document.getElementById('song-view-mode').classList.remove('hidden');
+  document.getElementById('song-edit-mode').classList.add('hidden');
+  document.getElementById('btn-save').style.display = 'none';
+  document.getElementById('btn-toggle-edit').textContent = '✏ Edit';
+  document.getElementById('editor-title-label').textContent = s.title;
+  populateViewMode(s);
+  showToast('Song saved successfully!', '✅');
 }
 
 function deleteSong() {
